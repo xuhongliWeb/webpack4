@@ -1,4 +1,2 @@
-export default aa = res => {return new Promise((resolve,reject) => {
-    console.log(res)
-    resolve()
-})}
+export const add = (a,b) => a+b
+console.log(add(1,22))
