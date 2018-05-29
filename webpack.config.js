@@ -2,6 +2,7 @@ const path = require('path')
 let HtmlWebpackPlugin = require('html-webpack-plugin')
 
 let ExtractTextWebpackPlugin = require('extract-text-webpack-plugin')
+let CleanWebpackPlugin = require('clean-webpack-plugin');
 module.exports = {
     // entry:['./src/index.js','./src/login.js'],
     //真正实现多入口和多出口需要写成对象的方式
@@ -15,8 +16,22 @@ module.exports = {
         filename: '[name][hash:4].js',
         path: path.resolve('dist')
     }, // 出口文件
+    resolve: {
+        // 别名
+        alias: {
+            $: './src/jquery.js'
+        },
+        // 省略后缀
+        extensions: ['.js', '.json', '.css']
+    },
     module: {
         rules: [
+            {
+                test:/\.js$/,
+                use:'babel-loader',
+                include:'/src/', // 支转换 src 目录下的
+                exclude:'/node_modules/' // 排除
+            },
             {
                 test: /\.css$/,
                 use: [
@@ -26,13 +41,27 @@ module.exports = {
             },
             {
                 test: /\.scss$/,
-                use: ExtractTextWebpackPlugin.extract( {
-                    use:['css-loader','sass-loader']
+                use: ExtractTextWebpackPlugin.extract({
+                    use: ['css-loader', 'sass-loader', 'postcss-loader']
                 })
+            },
+            {
+                test: /\.(jpe?g|png|gif)$/,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192,    // 小于8k的图片自动转成base64格式，并且不会存在实体图片
+                            outputPath: 'images/'   // 图片打包后存放的目录
+                        }
+                    }
+                ]
             }
         ]
     }, // 处   理对应的模块
     plugins: [
+        // 打包前先清空
+        new CleanWebpackPlugin('dist'),
         // 通过new 这个类来使用插件
         new HtmlWebpackPlugin({
             // 模板
@@ -52,6 +81,11 @@ module.exports = {
         // 拆分后会把css文件放到dist目录下的css/style.css
         new ExtractTextWebpackPlugin('css/[name].css')
     ], // 处理对应的插件
-    devServer: {}, // 开发服务器配置
+    devServer: {
+        contentBase:'./dist',
+        port:'8888',
+        open:true, // 自动打开浏览器
+        hot:false //开启热更新
+    }, // 开发服务器配置
     mode: 'development' // 模式配置
 }
